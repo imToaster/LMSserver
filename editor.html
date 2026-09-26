@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LMS SMP — Website Editor</title>
+<style>
+:root{--bg:#0a0c11;--panel:#12151d;--elevated:#191d28;--line:#262b38;--white:#f4f6f9;--muted:#9ba3b4;--faint:#656d80;--blue:#5b7fff;--red:#d13b3b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--white);font-family:Arial,sans-serif}
+.top{border-bottom:1px solid var(--line);padding:18px;position:sticky;top:0;background:rgba(10,12,17,.95);z-index:10}
+.topin{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:1.25rem;margin:0}.sub{color:var(--muted);font-size:.8rem;margin-top:4px}
+.wrap{max-width:1100px;margin:25px auto;padding:0 18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:18px}
+.card h2{font-size:1rem;margin:0 0 14px;color:var(--blue)}
+.field{margin-bottom:12px}.field label{display:block;color:var(--muted);font-size:.76rem;margin-bottom:5px}
+input,textarea{width:100%;background:var(--elevated);color:var(--white);border:1px solid var(--line);border-radius:6px;padding:10px;font:inherit;font-size:.86rem}
+textarea{min-height:80px;resize:vertical}input:focus,textarea:focus{outline:2px solid var(--blue)}
+.check{display:flex;align-items:center;gap:8px}.check input{width:auto}
+.array-item{border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0;position:relative}
+.remove{position:absolute;right:7px;top:5px;background:none;border:0;color:#aaa;font-size:20px;cursor:pointer}
+.remove:hover{color:#f77}.add,.action{border:1px solid var(--line);background:var(--elevated);color:var(--white);padding:10px 14px;border-radius:6px;cursor:pointer}
+.add{width:100%;border-style:dashed}.add:hover,.action:hover{border-color:var(--blue)}
+.primary{background:var(--blue);border-color:var(--blue)}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.note,.status{color:var(--muted);font-size:.78rem;line-height:1.55}
+.preview{background:#06070a;border:1px solid var(--line);border-radius:8px;padding:18px}
+.preview-title{font-size:1.6rem;font-weight:700}.preview-ip{font-family:monospace;color:var(--blue);margin-top:7px}
+</style>
+</head>
+<body>
+<header class="top"><div class="topin">
+<div><h1>⚙️ LMS SMP Website Editor</h1><div class="sub">Edit your website without editing the giant HTML file.</div></div>
+<button class="action primary" id="download">Download updated index.html</button>
+</div></header>
+
+<main class="wrap"><div class="grid">
+<div id="form"></div>
+<div>
+<div class="card"><h2>Live Preview</h2><div class="preview">
+<div class="preview-title" id="p-name"></div>
+<div class="preview-ip" id="p-ip"></div>
+<p id="p-about" class="note"></p>
+<hr style="border-color:#262b38;border-width:1px 0 0;margin:18px 0">
+<strong id="p-title"></strong><p id="p-body" class="note"></p>
+</div></div>
+
+<div class="card"><h2>Save changes</h2>
+<p class="note">
+Edit everything on the left, then click <b>Download updated index.html</b>.<br><br>
+Upload that downloaded file to your <b>lms-smp</b> GitHub repository and replace the old <b>index.html</b>.
+</p>
+<div class="actions">
+<button class="action" id="reset">Reset</button>
+<button class="action" id="copy">Copy CONFIG</button>
+</div>
+<div class="status" id="status"></div>
+</div>
+</div>
+</div></main>
+
+<script>
+const ORIGINAL_HTML = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Liberty Vanilla — Minecraft Server</title>\n<meta name=\"description\" content=\"Liberty Vanilla is a survival Minecraft server. Check live status, join our Discord, and read the rules.\">\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap\" rel=\"stylesheet\">\n<style>\n  /* ============================================================\n     Content lives in CONFIG, inside the <script> block below,\n     between the /* === CONFIG START/END === *\\/ markers.\n     You can edit it there directly, OR go to\n     yoursite.com/#edit for an in-browser editor — see the\n     \"How to edit this site\" note at the very bottom of the\n     script for how the editor's \"download\" button works.\n     ============================================================ */\n  :root {\n    --bg: #0a0c11;\n    --bg-panel: #12151d;\n    --bg-elevated: #191d28;\n    --line: #262b38;\n    --line-soft: #1b1f2a;\n\n    --white: #f4f6f9;\n    --muted: #9ba3b4;\n    --faint: #656d80;\n\n    --red: #d13b3b;\n    --red-soft: rgba(209, 59, 59, 0.14);\n    --red-dim: #8f2a2a;\n    --blue: #5b7fff;\n    --blue-soft: rgba(91, 127, 255, 0.14);\n    --blue-dim: #33417a;\n    --green: #3ecf6f;\n\n    --font-display: 'Space Grotesk', sans-serif;\n    --font-body: 'Inter', sans-serif;\n    --font-mono: 'IBM Plex Mono', monospace;\n  }\n\n  * { box-sizing: border-box; }\n  html { scroll-behavior: smooth; }\n  body {\n    margin: 0;\n    background: var(--bg);\n    color: var(--white);\n    font-family: var(--font-body);\n    line-height: 1.55;\n    -webkit-font-smoothing: antialiased;\n  }\n  a { color: inherit; text-decoration: none; }\n  h1, h2, h3 { font-family: var(--font-display); margin: 0; line-height: 1.15; }\n  p { margin: 0; }\n  button { font-family: inherit; cursor: pointer; }\n  ::selection { background: var(--blue-dim); color: var(--white); }\n  :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }\n\n  .old-glory-stripe {\n    height: 4px;\n    background: linear-gradient(90deg,\n      var(--red) 0 33.3%, var(--white) 33.3% 66.6%, var(--blue) 66.6% 100%);\n  }\n\n  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }\n\n  header.nav {\n    position: sticky; top: 0; z-index: 20;\n    background: rgba(10, 12, 17, 0.86);\n    backdrop-filter: blur(10px);\n    border-bottom: 1px solid var(--line-soft);\n  }\n  .nav-row {\n    display: flex; align-items: center; justify-content: space-between;\n    padding: 16px clamp(20px, 4vw, 40px);\n    max-width: 1040px; margin: 0 auto;\n  }\n  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; }\n  .brand-mark { width: 26px; height: 26px; border-radius: 5px; flex: none; background: linear-gradient(135deg, var(--red) 0 50%, var(--blue) 50% 100%); }\n  .nav-links { display: flex; gap: 28px; }\n  @media (max-width: 760px) { .nav-links { display: none; } }\n  .nav-links a { font-size: 0.86rem; color: var(--muted); transition: color 0.15s ease; }\n  .nav-links a:hover, .nav-links a.active { color: var(--white); }\n  .nav-cta { display: inline-flex; align-items: center; gap: 7px; background: var(--red); color: var(--white); padding: 9px 16px; border-radius: 5px; font-size: 0.84rem; font-weight: 500; }\n  .nav-cta:hover { background: #e04a4a; }\n\n  section { padding: 74px 0; border-bottom: 1px solid var(--line-soft); }\n  section:last-of-type { border-bottom: none; }\n  .eyebrow { font-family: var(--font-mono); font-size: 0.76rem; color: var(--blue); letter-spacing: 0.02em; margin-bottom: 12px; }\n  .sec-title { font-size: 1.7rem; font-weight: 600; margin-bottom: 10px; }\n  .sec-sub { color: var(--muted); font-size: 0.98rem; max-width: 520px; }\n  .center { text-align: center; margin-left: auto; margin-right: auto; }\n\n  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 5px; font-size: 0.9rem; font-weight: 500; border: 1px solid transparent; transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease; }\n  .btn:active { transform: translateY(1px); }\n  .btn-red { background: var(--red); color: var(--white); }\n  .btn-red:hover { background: #e04a4a; }\n  .btn-outline { background: transparent; border-color: var(--line); color: var(--white); }\n  .btn-outline:hover { border-color: var(--muted); }\n\n  .hero { padding-top: 60px; text-align: center; }\n  .hero-title { font-size: clamp(2.2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 10px; }\n  .hero-sub { color: var(--muted); font-size: 1rem; margin-bottom: 26px; }\n\n  .ip-line { display: inline-flex; align-items: center; gap: 10px; background: var(--bg-panel); border: 1px solid var(--line); padding: 8px 8px 8px 16px; border-radius: 6px; margin-bottom: 34px; }\n  .ip-line span { font-family: var(--font-mono); color: var(--white); font-size: 0.92rem; }\n  .copy-btn { background: var(--bg-elevated); border: 1px solid var(--line); color: var(--muted); font-size: 0.78rem; padding: 6px 12px; border-radius: 4px; }\n  .copy-btn:hover { border-color: var(--muted); color: var(--white); }\n\n  .status-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-panel); border: 1px solid var(--line); padding: 7px 16px; border-radius: 999px; font-size: 0.84rem; color: var(--muted); margin-bottom: 26px; }\n  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }\n  .status-dot.online { background: var(--green); box-shadow: 0 0 0 3px rgba(62,207,111,0.18); }\n  .status-dot.offline { background: var(--red); box-shadow: 0 0 0 3px rgba(209,59,59,0.18); }\n  .status-dot.pulse { animation: pulse 1.6s ease-in-out infinite; }\n  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }\n\n  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 620px; margin: 0 auto; }\n  .stat-box { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px 12px; }\n  .stat-value { font-family: var(--font-mono); font-size: 1.5rem; color: var(--blue); font-weight: 500; }\n  .stat-label { font-size: 0.72rem; color: var(--faint); margin-top: 4px; }\n  .status-updated { font-size: 0.74rem; color: var(--faint); margin-top: 16px; }\n  @media (max-width: 560px) { .stat-row { grid-template-columns: 1fr; max-width: 280px; } }\n\n  .spotlight { display: flex; gap: 30px; justify-content: space-between; background: var(--bg-panel); border: 1px solid var(--red-dim); border-radius: 10px; padding: 34px; flex-wrap: wrap; }\n  .spotlight-main { flex: 1; min-width: 260px; }\n  .spotlight-main h3 { font-size: 1.4rem; font-weight: 700; margin: 6px 0 12px; }\n  .spotlight-main p { color: var(--muted); font-size: 0.94rem; max-width: 460px; margin-bottom: 16px; }\n  .perk-list { list-style: none; padding: 0; margin: 0 0 22px; display: flex; flex-direction: column; gap: 8px; }\n  .perk-list li { font-size: 0.88rem; color: var(--muted); display: flex; gap: 9px; }\n  .perk-list li::before { content: \"★\"; color: var(--blue); font-size: 0.75rem; margin-top: 3px; }\n  .spotlight-actions { display: flex; gap: 12px; flex-wrap: wrap; }\n  .spotlight-badge { flex: none; align-self: flex-start; background: var(--blue-soft); border: 1px solid var(--blue-dim); border-radius: 8px; padding: 16px 24px; text-align: center; }\n  .spotlight-badge .lbl { font-size: 0.7rem; color: var(--faint); font-family: var(--font-mono); }\n  .spotlight-badge .val { font-family: var(--font-display); font-weight: 700; color: var(--blue); font-size: 1.15rem; margin-top: 4px; }\n\n  .soon-row { display: flex; gap: 14px; overflow-x: auto; margin-top: 18px; padding-bottom: 4px; }\n  .soon-card { flex: none; width: 210px; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }\n  .soon-tag { display: inline-block; font-size: 0.68rem; font-family: var(--font-mono); color: var(--blue); background: var(--blue-soft); padding: 2px 8px; border-radius: 3px; margin-bottom: 9px; }\n  .soon-card h4 { font-size: 0.92rem; font-weight: 600; margin-bottom: 5px; }\n  .soon-card p { font-size: 0.82rem; color: var(--muted); }\n\n  .about-text { max-width: 620px; font-size: 1.02rem; color: var(--muted); }\n\n  .console-panel { background: #06070a; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }\n  .console-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg-panel); border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-size: 0.78rem; color: var(--faint); }\n  .console-bar .dot { width: 8px; height: 8px; border-radius: 50%; }\n  .console-body { padding: 22px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); min-height: 120px; }\n  .console-body iframe { width: 100%; height: 420px; border: 0; border-radius: 4px; background: #06070a; }\n  .console-placeholder { border: 1px dashed var(--line); border-radius: 6px; padding: 18px; }\n  .console-placeholder code { display: block; margin-top: 10px; padding: 10px 12px; background: var(--bg-elevated); border-radius: 4px; font-size: 0.78rem; color: var(--blue); overflow-x: auto; }\n\n  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 30px; }\n  @media (max-width: 760px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }\n  @media (max-width: 520px) { .feature-grid { grid-template-columns: 1fr; } }\n  .feature-card { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 22px; }\n  .feature-icon { width: 34px; height: 34px; border-radius: 6px; background: var(--red-soft); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 14px; }\n  .feature-card h3 { font-size: 0.98rem; font-weight: 600; margin-bottom: 6px; }\n  .feature-card p { font-size: 0.85rem; color: var(--muted); }\n\n  .spec-highlight { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; max-width: 560px; margin: 30px auto 0; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; }\n  .spec-hl-item { text-align: center; padding: 24px 10px; border-right: 1px solid var(--line); }\n  .spec-hl-item:last-child { border-right: none; }\n  .spec-hl-value { font-family: var(--font-mono); font-size: 1.6rem; color: var(--blue); font-weight: 500; }\n  .spec-hl-label { font-size: 0.74rem; color: var(--faint); margin-top: 4px; }\n  @media (max-width: 560px) { .spec-highlight { grid-template-columns: 1fr; } .spec-hl-item { border-right: none; border-bottom: 1px solid var(--line); } .spec-hl-item:last-child { border-bottom: none; } }\n\n  .spec-list { max-width: 520px; margin: 24px auto 0; }\n  .spec-row { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); font-family: var(--font-mono); font-size: 0.86rem; }\n  .spec-row:last-child { border-bottom: none; }\n  .spec-row .k { color: var(--faint); }\n  .spec-row .v { color: var(--white); }\n\n  .rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 30px; }\n  @media (max-width: 620px) { .rules-grid { grid-template-columns: 1fr; } }\n  .rule-card { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 20px; }\n  .rule-num { font-family: var(--font-mono); color: var(--red); font-size: 0.8rem; }\n  .rule-card h3 { font-size: 0.95rem; font-weight: 600; margin: 8px 0 6px; }\n  .rule-card p { font-size: 0.85rem; color: var(--muted); }\n\n  .contrib-heading { display: inline-block; background: var(--blue); color: var(--white); font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; padding: 6px 18px; border-radius: 8px; margin-bottom: 10px; }\n  .contrib-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 30px; }\n  @media (max-width: 760px) { .contrib-row { grid-template-columns: repeat(2, 1fr); } }\n  @media (max-width: 420px) { .contrib-row { grid-template-columns: 1fr; } }\n  .contrib-card { background: var(--bg-panel); border: 1px solid var(--line); border-radius: 8px; padding: 18px; text-align: center; }\n  .contrib-avatar { width: 52px; height: 52px; border-radius: 8px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--white); }\n  .contrib-card h3 { font-size: 0.94rem; font-weight: 600; }\n  .contrib-role { display: inline-block; font-size: 0.7rem; margin-top: 8px; padding: 3px 10px; border-radius: 999px; }\n\n  footer { padding: 32px 0 50px; text-align: center; color: var(--faint); font-size: 0.82rem; }\n\n  @media (prefers-reduced-motion: reduce) { .status-dot.pulse { animation: none; } html { scroll-behavior: auto; } }\n\n  /* ================= dev / editor panel ================= */\n  #dev-toggle {\n    position: fixed; bottom: 20px; right: 20px; z-index: 50;\n    width: 46px; height: 46px; border-radius: 50%;\n    background: var(--blue); color: var(--white); border: none;\n    font-size: 1.1rem; box-shadow: 0 4px 14px rgba(0,0,0,0.4);\n    display: none; align-items: center; justify-content: center;\n  }\n  #dev-toggle.shown { display: flex; }\n  #dev-panel {\n    position: fixed; top: 0; right: 0; height: 100vh; width: min(400px, 100vw);\n    background: var(--bg-panel); border-left: 1px solid var(--line);\n    z-index: 49; transform: translateX(100%); transition: transform 0.25s ease;\n    display: flex; flex-direction: column;\n  }\n  #dev-panel.open { transform: translateX(0); }\n  .dev-panel-header {\n    padding: 16px 18px; border-bottom: 1px solid var(--line);\n    display: flex; align-items: center; justify-content: space-between; flex: none;\n  }\n  .dev-panel-header h2 { font-size: 1rem; font-weight: 600; }\n  .dev-panel-header button { background: none; border: none; color: var(--muted); font-size: 1.2rem; }\n  .dev-panel-body { padding: 16px 18px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 26px; }\n  .dev-panel-footer { padding: 14px 18px; border-top: 1px solid var(--line); flex: none; display: flex; flex-direction: column; gap: 8px; }\n  .dev-section-title { font-family: var(--font-mono); font-size: 0.74rem; color: var(--blue); text-transform: none; margin-bottom: 10px; }\n  .dev-field { margin-bottom: 10px; }\n  .dev-field label { display: block; font-size: 0.76rem; color: var(--faint); margin-bottom: 4px; }\n  .dev-field input, .dev-field textarea {\n    width: 100%; background: var(--bg-elevated); border: 1px solid var(--line); color: var(--white);\n    border-radius: 4px; padding: 8px 10px; font-size: 0.84rem; font-family: var(--font-body);\n  }\n  .dev-field textarea { resize: vertical; min-height: 56px; }\n  .dev-field input:focus, .dev-field textarea:focus { border-color: var(--blue); }\n  .dev-list-item { border: 1px solid var(--line); border-radius: 6px; padding: 12px; margin-bottom: 10px; position: relative; }\n  .dev-remove { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--faint); font-size: 0.9rem; }\n  .dev-remove:hover { color: var(--red); }\n  .dev-add-btn { width: 100%; background: transparent; border: 1px dashed var(--line); color: var(--muted); padding: 8px; border-radius: 6px; font-size: 0.82rem; }\n  .dev-add-btn:hover { border-color: var(--blue); color: var(--white); }\n  .dev-hint { font-size: 0.74rem; color: var(--faint); line-height: 1.5; }\n  .dev-btn { padding: 10px 14px; border-radius: 5px; font-size: 0.84rem; border: 1px solid var(--line); background: var(--bg-elevated); color: var(--white); text-align: center; }\n  .dev-btn.primary { background: var(--blue); border-color: var(--blue); }\n  .dev-btn.primary:hover { background: #728fff; }\n  .dev-btn:hover { border-color: var(--muted); }\n  .dev-checkbox { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--muted); }\n  .dev-checkbox input { width: auto; }\n</style>\n</head>\n<body>\n\n<div class=\"old-glory-stripe\"></div>\n\n<header class=\"nav\">\n  <div class=\"nav-row\">\n    <div class=\"brand\"><span class=\"brand-mark\"></span><span id=\"brand-name\">Liberty Vanilla</span></div>\n    <nav class=\"nav-links\">\n      <a data-nav href=\"#status\">Server Status</a>\n      <a data-nav href=\"#about\">About</a>\n      <a data-nav href=\"#features\">Features</a>\n      <a data-nav href=\"#rules\">Rules</a>\n      <a data-nav href=\"#contributors\">Contributors</a>\n    </nav>\n    <a class=\"nav-cta\" id=\"discord-btn-nav\" href=\"#\" target=\"_blank\" rel=\"noopener\">Join Discord</a>\n  </div>\n</header>\n\n<main class=\"wrap\">\n\n  <section class=\"hero\" id=\"status\">\n    <h1 class=\"hero-title\">Server Status</h1>\n    <p class=\"hero-sub\">Real-time status updates for <span id=\"hero-name\">Liberty Vanilla</span></p>\n\n    <div class=\"ip-line\">\n      <span id=\"server-ip\">play.libertyvanilla.ddns.net</span>\n      <button class=\"copy-btn\" id=\"copy-ip\">Copy</button>\n    </div>\n    <br>\n    <div class=\"status-pill\">\n      <span class=\"status-dot\" id=\"status-dot\"></span>\n      <span id=\"status-text\">Checking…</span>\n    </div>\n\n    <div class=\"stat-row\">\n      <div class=\"stat-box\"><div class=\"stat-value\" id=\"stat-players\">— / —</div><div class=\"stat-label\">Players</div></div>\n      <div class=\"stat-box\"><div class=\"stat-value\" id=\"stat-ping\">— ms</div><div class=\"stat-label\">Ping</div></div>\n      <div class=\"stat-box\"><div class=\"stat-value\" id=\"stat-version\">—</div><div class=\"stat-label\">Version</div></div>\n    </div>\n    <div class=\"status-updated\" id=\"status-updated\"></div>\n  </section>\n\n  <section id=\"soon\">\n    <div class=\"eyebrow\">Coming soon</div>\n    <div class=\"spotlight\">\n      <div class=\"spotlight-main\">\n        <div class=\"eyebrow\" style=\"margin-bottom:2px\" id=\"spotlight-tag\">Season 3</div>\n        <h3 id=\"spotlight-title\">Season 3 starting soon</h3>\n        <p id=\"spotlight-body\"></p>\n        <ul class=\"perk-list\" id=\"spotlight-perks\"></ul>\n        <div class=\"spotlight-actions\">\n          <a class=\"btn btn-red\" id=\"discord-btn-spotlight\" href=\"#\" target=\"_blank\" rel=\"noopener\">Get notified — Discord</a>\n          <button class=\"btn btn-outline\" id=\"copy-ip-spotlight\">Copy server IP</button>\n        </div>\n      </div>\n      <div class=\"spotlight-badge\">\n        <div class=\"lbl\">Status</div>\n        <div class=\"val\">Soon</div>\n      </div>\n    </div>\n    <div class=\"soon-row\" id=\"soon-row\"></div>\n  </section>\n\n  <section id=\"about\">\n    <div class=\"center\">\n      <div class=\"eyebrow\">About</div>\n      <p class=\"about-text center\" id=\"about-text\"></p>\n    </div>\n  </section>\n\n  <section id=\"console\">\n    <div class=\"eyebrow\">Console</div>\n    <h2 class=\"sec-title\">Live console</h2>\n    <p class=\"sec-sub\" style=\"margin-bottom: 26px;\">Embeds the console from your host's control panel — this page can't run one on its own.</p>\n    <div class=\"console-panel\">\n      <div class=\"console-bar\">\n        <span class=\"dot\" style=\"background: var(--red)\"></span>\n        <span class=\"dot\" style=\"background: var(--white)\"></span>\n        <span class=\"dot\" style=\"background: var(--blue)\"></span>\n        <span style=\"margin-left: 6px;\">console</span>\n      </div>\n      <div class=\"console-body\" id=\"console-body\">\n        <div class=\"console-placeholder\">\n          No console connected yet. A live console needs a backend — a Pterodactyl, AMP, or Multicraft\n          panel that already exposes a web console for your server. Set the embed URL in the editor (or\n          the config) and it'll load here for anyone signed into that panel.\n          <code>consoleEmbedUrl = \"https://panel.yourhost.com/server/xxxx/console\"</code>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <section id=\"features\">\n    <div class=\"eyebrow\">Features</div>\n    <h2 class=\"sec-title\">Everything you need for a premium survival experience</h2>\n    <div class=\"feature-grid\" id=\"feature-grid\"></div>\n  </section>\n\n  <section id=\"specs\">\n    <div class=\"center\">\n      <div class=\"eyebrow\">Hardware</div>\n      <h2 class=\"sec-title\">Server Specs</h2>\n      <p class=\"sec-sub center\">Stable performance for up to the listed player count without lag.</p>\n    </div>\n    <div class=\"spec-highlight\" id=\"spec-highlight\"></div>\n    <div class=\"spec-list\" id=\"spec-list\"></div>\n  </section>\n\n  <section id=\"rules\">\n    <div class=\"center\">\n      <div class=\"eyebrow\">Server rules</div>\n      <h2 class=\"sec-title\">Server Rules</h2>\n      <p class=\"sec-sub center\">Keep the world fair, fun, and lag-free for everyone.</p>\n    </div>\n    <div class=\"rules-grid\" id=\"rules-grid\"></div>\n  </section>\n\n  <section id=\"contributors\">\n    <div class=\"center\">\n      <div class=\"contrib-heading\">Contributors</div>\n      <p class=\"sec-sub center\">The people who keep <span id=\"contrib-server-name\">Liberty Vanilla</span> running.</p>\n    </div>\n    <div class=\"contrib-row\" id=\"contrib-row\"></div>\n  </section>\n\n</main>\n\n<footer>\n  <span id=\"footer-name\">Liberty Vanilla</span> — go to this page's URL with <code>#edit</code> on the end to open the editor.\n</footer>\n\n<!-- ============ dev / editor panel ============ -->\n<button id=\"dev-toggle\" title=\"Edit site content\">✎</button>\n<div id=\"dev-panel\">\n  <div class=\"dev-panel-header\">\n    <h2>Edit site content</h2>\n    <button id=\"dev-close\" aria-label=\"Close\">×</button>\n  </div>\n  <div class=\"dev-panel-body\" id=\"dev-panel-body\"><!-- built by JS --></div>\n  <div class=\"dev-panel-footer\">\n    <div class=\"dev-hint\" id=\"dev-status-hint\"></div>\n    <button class=\"dev-btn primary\" id=\"dev-download-full\">Download updated index.html</button>\n    <button class=\"dev-btn\" id=\"dev-download-config\">Download config only (fallback)</button>\n    <button class=\"dev-btn\" id=\"dev-reset\">Discard changes</button>\n  </div>\n</div>\n\n<script>\n/* === CONFIG START === */\nconst CONFIG = {\n  serverName: \"Liberty Vanilla\",\n  ip: \"play.libertyvanilla.ddns.net\",\n  discordInvite: \"https://discord.gg/your-invite\",\n  consoleEmbedUrl: null,\n\n  statusEnabled: true,\n  statusApiBase: \"https://api.mcsrvstat.us/3/\",\n  statusPollMs: 10000,\n\n  about: \"Liberty Vanilla is a carefully curated Minecraft survival server focused on authentic vanilla gameplay, with a competitive but fair economy. No pay-to-win, no double-dipping — just a high-performance world where community, skill, and exploration matter.\",\n\n  spotlight: {\n    tag: \"Season 3\",\n    title: \"Season 3 starting soon\",\n    body: \"Season 3 is currently in development — a fresh world, a reworked economy, and a few surprises for launch weekend.\",\n    perks: [\n      \"Early access to the new spawn build\",\n      \"Land claims carry over from Season 2\",\n      \"First-week double drop rates\"\n    ]\n  },\n\n  comingSoon: [\n    { tag: \"Planned\", title: \"Player-run shops\", body: \"A marketplace plot anyone can rent a stall in.\" },\n    { tag: \"Planned\", title: \"Seasonal event arena\", body: \"Rotating minigames for the winter break.\" },\n    { tag: \"Idea\", title: \"Companion app\", body: \"Check the map and player list from your phone.\" }\n  ],\n\n  features: [\n    { icon: \"🌾\", title: \"Vanilla Gameplay\", body: \"Stay true to Minecraft with only lightweight vanilla+ additions.\" },\n    { icon: \"🛡️\", title: \"Vetted\", body: \"Every player is looked through with our anti-hack layer before they can join.\" },\n    { icon: \"🤝\", title: \"Community Driven\", body: \"A welcoming player-based staff and active community.\" },\n    { icon: \"⚡\", title: \"High-Performance\", body: \"Powerful hardware backed by the low latency our players expect.\" },\n    { icon: \"⏱️\", title: \"24/7 Uptime\", body: \"Always online, so you can jump in whenever you get the itch.\" },\n    { icon: \"🧩\", title: \"Optimized for Smooth Gameplay\", body: \"Carefully configured for buttery-smooth survival experiences.\" }\n  ],\n\n  specHighlight: [\n    { value: \"24 GB\", label: \"RAM\" },\n    { value: \"4\", label: \"vCPUs\" },\n    { value: \"30\", label: \"Players without lag\" }\n  ],\n  specDetails: [\n    { label: \"Storage\", value: \"1 TB NVMe SSD\" },\n    { label: \"Network\", value: \"1 Gbps, unmetered\" },\n    { label: \"Region\", value: \"US-East\" },\n    { label: \"Backups\", value: \"Every 6 hours, 14-day retention\" }\n  ],\n\n  rules: [\n    { title: \"No cheating\", body: \"No hacked clients, X-ray, or other unfair advantages.\" },\n    { title: \"No x-ray\", body: \"Resource discovery through vanilla means only.\" },\n    { title: \"No exploits\", body: \"Report bugs and glitches instead of using them.\" },\n    { title: \"Respect all players\", body: \"Harassment, hate speech, and toxicity aren't tolerated.\" },\n    { title: \"No griefing\", body: \"Don't touch builds, chests, or land that isn't yours.\" },\n    { title: \"No lag machines\", body: \"Large farms or redstone builds need staff approval first.\" }\n  ],\n\n  contributors: [\n    { name: \"Your_Username\", role: \"Owner\", initial: \"Y\" },\n    { name: \"CoAdminName\", role: \"Admin\", initial: \"C\" },\n    { name: \"BuilderName\", role: \"Builder\", initial: \"B\" },\n    { name: \"DevContributor\", role: \"Developer\", initial: \"D\" }\n  ]\n};\n/* === CONFIG END === */\n\nconst ROLE_COLORS = {\n  owner:     { bg: \"rgba(209,59,59,0.16)\", fg: \"#e78585\", avatar: \"linear-gradient(135deg, var(--red), var(--red-dim))\" },\n  admin:     { bg: \"rgba(91,127,255,0.16)\", fg: \"#93a8ff\", avatar: \"linear-gradient(135deg, var(--blue), var(--blue-dim))\" },\n  builder:   { bg: \"rgba(91,127,255,0.16)\", fg: \"#93a8ff\", avatar: \"linear-gradient(135deg, var(--blue), var(--blue-dim))\" },\n  developer: { bg: \"rgba(209,59,59,0.16)\", fg: \"#e78585\", avatar: \"linear-gradient(135deg, var(--red), var(--red-dim))\" },\n  default:   { bg: \"rgba(255,255,255,0.08)\", fg: \"#c7cbd6\", avatar: \"linear-gradient(135deg, #4a4f5e, #2b2f3a)\" }\n};\n\n// working copy — the editor mutates this; CONFIG above stays the \"loaded\" baseline\nlet data = JSON.parse(JSON.stringify(CONFIG));\n\nfunction clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }\nfunction mk(tag, opts = {}) {\n  const n = document.createElement(tag);\n  if (opts.class) n.className = opts.class;\n  if (opts.text != null) n.textContent = opts.text;\n  if (opts.style) n.setAttribute(\"style\", opts.style);\n  if (opts.attrs) for (const k in opts.attrs) n.setAttribute(k, opts.attrs[k]);\n  return n;\n}\n\n/* ================================================================\n   Render — rebuilds every dynamic section from `data`. Safe to\n   call repeatedly (editor calls this on every keystroke).\n   ================================================================ */\nfunction render() {\n  document.getElementById(\"brand-name\").textContent = data.serverName;\n  document.getElementById(\"hero-name\").textContent = data.serverName;\n  document.getElementById(\"server-ip\").textContent = data.ip;\n  document.getElementById(\"footer-name\").textContent = data.serverName;\n  document.getElementById(\"contrib-server-name\").textContent = data.serverName;\n  document.getElementById(\"about-text\").textContent = data.about;\n  document.getElementById(\"discord-btn-nav\").href = data.discordInvite;\n  document.getElementById(\"discord-btn-spotlight\").href = data.discordInvite;\n  document.title = data.serverName + \" — Minecraft Server\";\n\n  document.getElementById(\"spotlight-tag\").textContent = data.spotlight.tag;\n  document.getElementById(\"spotlight-title\").textContent = data.spotlight.title;\n  document.getElementById(\"spotlight-body\").textContent = data.spotlight.body;\n  const perkList = document.getElementById(\"spotlight-perks\");\n  clear(perkList);\n  data.spotlight.perks.forEach(p => perkList.appendChild(mk(\"li\", { text: p })));\n\n  const soonRow = document.getElementById(\"soon-row\");\n  clear(soonRow);\n  data.comingSoon.forEach(item => {\n    const card = mk(\"div\", { class: \"soon-card\" });\n    card.appendChild(mk(\"span\", { class: \"soon-tag\", text: item.tag }));\n    card.appendChild(mk(\"h4\", { text: item.title }));\n    card.appendChild(mk(\"p\", { text: item.body }));\n    soonRow.appendChild(card);\n  });\n\n  const featureGrid = document.getElementById(\"feature-grid\");\n  clear(featureGrid);\n  data.features.forEach(f => {\n    const card = mk(\"div\", { class: \"feature-card\" });\n    const icon = mk(\"div\", { class: \"feature-icon\", text: f.icon });\n    card.appendChild(icon);\n    card.appendChild(mk(\"h3\", { text: f.title }));\n    card.appendChild(mk(\"p\", { text: f.body }));\n    featureGrid.appendChild(card);\n  });\n\n  const specHighlight = document.getElementById(\"spec-highlight\");\n  clear(specHighlight);\n  data.specHighlight.forEach(s => {\n    const item = mk(\"div\", { class: \"spec-hl-item\" });\n    item.appendChild(mk(\"div\", { class: \"spec-hl-value\", text: s.value }));\n    item.appendChild(mk(\"div\", { class: \"spec-hl-label\", text: s.label }));\n    specHighlight.appendChild(item);\n  });\n  const specList = document.getElementById(\"spec-list\");\n  clear(specList);\n  data.specDetails.forEach(s => {\n    const row = mk(\"div\", { class: \"spec-row\" });\n    row.appendChild(mk(\"span\", { class: \"k\", text: s.label }));\n    row.appendChild(mk(\"span\", { class: \"v\", text: s.value }));\n    specList.appendChild(row);\n  });\n\n  const rulesGrid = document.getElementById(\"rules-grid\");\n  clear(rulesGrid);\n  data.rules.forEach((r, i) => {\n    const card = mk(\"div\", { class: \"rule-card\" });\n    card.appendChild(mk(\"div\", { class: \"rule-num\", text: String(i + 1).padStart(2, \"0\") }));\n    card.appendChild(mk(\"h3\", { text: r.title }));\n    card.appendChild(mk(\"p\", { text: r.body }));\n    rulesGrid.appendChild(card);\n  });\n\n  const contribRow = document.getElementById(\"contrib-row\");\n  clear(contribRow);\n  data.contributors.forEach(c => {\n    const colors = ROLE_COLORS[(c.role || \"\").toLowerCase()] || ROLE_COLORS.default;\n    const card = mk(\"div\", { class: \"contrib-card\" });\n    card.appendChild(mk(\"div\", { class: \"contrib-avatar\", text: c.initial, style: `background:${colors.avatar}` }));\n    card.appendChild(mk(\"h3\", { text: c.name }));\n    card.appendChild(mk(\"div\", { class: \"contrib-role\", text: c.role, style: `background:${colors.bg}; color:${colors.fg}` }));\n    contribRow.appendChild(card);\n  });\n\n  if (data.consoleEmbedUrl) {\n    const body = document.getElementById(\"console-body\");\n    clear(body);\n    const iframe = document.createElement(\"iframe\");\n    iframe.src = data.consoleEmbedUrl;\n    iframe.title = \"Server console\";\n    iframe.loading = \"lazy\";\n    body.appendChild(iframe);\n  }\n}\nrender();\n\n// copy IP (two buttons)\nasync function copyIp(btn) {\n  const original = btn.textContent;\n  try { await navigator.clipboard.writeText(data.ip); btn.textContent = \"Copied\"; }\n  catch { btn.textContent = \"Copy failed\"; }\n  setTimeout(() => (btn.textContent = original), 1800);\n}\ndocument.getElementById(\"copy-ip\").addEventListener(\"click\", (e) => copyIp(e.currentTarget));\ndocument.getElementById(\"copy-ip-spotlight\").addEventListener(\"click\", (e) => copyIp(e.currentTarget));\n\n// active nav highlight\nconst navLinks = Array.from(document.querySelectorAll(\"[data-nav]\"));\nconst sections = navLinks.map(l => document.querySelector(l.getAttribute(\"href\")));\nconst navObserver = new IntersectionObserver(entries => {\n  entries.forEach(entry => {\n    if (entry.isIntersecting) {\n      const id = \"#\" + entry.target.id;\n      navLinks.forEach(l => l.classList.toggle(\"active\", l.getAttribute(\"href\") === id));\n    }\n  });\n}, { rootMargin: \"-40% 0px -50% 0px\" });\nsections.forEach(s => s && navObserver.observe(s));\n\n/* ================================================================\n   Live status\n   ================================================================ */\nconst dot = document.getElementById(\"status-dot\");\nconst statusText = document.getElementById(\"status-text\");\nconst statPlayers = document.getElementById(\"stat-players\");\nconst statPing = document.getElementById(\"stat-ping\");\nconst statVersion = document.getElementById(\"stat-version\");\nconst statusUpdated = document.getElementById(\"status-updated\");\n\nfunction setChecking() { dot.className = \"status-dot pulse\"; statusText.textContent = \"Checking…\"; }\nfunction setOnline(sdata, pingMs) {\n  dot.className = \"status-dot online\"; statusText.textContent = \"Online\";\n  statPlayers.textContent = `${sdata?.players?.online ?? \"—\"} / ${sdata?.players?.max ?? \"—\"}`;\n  statPing.textContent = pingMs != null ? `${pingMs} ms` : \"—\";\n  statVersion.textContent = sdata?.version || \"—\";\n}\nfunction setOffline() {\n  dot.className = \"status-dot offline\"; statusText.textContent = \"Offline\";\n  statPlayers.textContent = \"— / —\"; statPing.textContent = \"— ms\"; statVersion.textContent = \"—\";\n}\nfunction setUnavailable() {\n  dot.className = \"status-dot\"; statusText.textContent = \"Status unavailable\";\n  statPlayers.textContent = \"— / —\"; statPing.textContent = \"— ms\"; statVersion.textContent = \"—\";\n}\nasync function pollStatus() {\n  if (!data.statusEnabled) { dot.className = \"status-dot\"; statusText.textContent = \"Status disabled\"; return; }\n  setChecking();\n  const start = performance.now();\n  try {\n    const res = await fetch(data.statusApiBase + encodeURIComponent(data.ip), { cache: \"no-store\" });\n    const ping = Math.round(performance.now() - start);\n    if (!res.ok) throw new Error(\"bad response\");\n    const sdata = await res.json();\n    if (sdata.online) setOnline(sdata, ping); else setOffline();\n  } catch (err) { setUnavailable(); }\n  statusUpdated.textContent = \"Updated \" + new Date().toLocaleTimeString();\n}\npollStatus();\nsetInterval(pollStatus, CONFIG.statusPollMs);\n\n/* ================================================================\n   Dev / editor panel\n   Only appears when the URL ends in #edit — e.g.\n   https://yoursite.com/#edit  — this is NOT real access control,\n   just keeps it out of the way for normal visitors.\n   ================================================================ */\nconst devToggle = document.getElementById(\"dev-toggle\");\nconst devPanel = document.getElementById(\"dev-panel\");\nconst devBody = document.getElementById(\"dev-panel-body\");\n\nfunction showDevToggleIfRequested() {\n  if (location.hash === \"#edit\") devToggle.classList.add(\"shown\");\n}\nshowDevToggleIfRequested();\nwindow.addEventListener(\"hashchange\", showDevToggleIfRequested);\n\ndevToggle.addEventListener(\"click\", () => { buildEditor(); devPanel.classList.add(\"open\"); });\ndocument.getElementById(\"dev-close\").addEventListener(\"click\", () => devPanel.classList.remove(\"open\"));\n\nfunction field(label, value, onInput, multiline) {\n  const wrap = mk(\"div\", { class: \"dev-field\" });\n  wrap.appendChild(mk(\"label\", { text: label }));\n  const input = document.createElement(multiline ? \"textarea\" : \"input\");\n  input.value = value ?? \"\";\n  input.addEventListener(\"input\", () => { onInput(input.value); render(); });\n  wrap.appendChild(input);\n  return wrap;\n}\n\nfunction checkboxField(label, checked, onChange) {\n  const wrap = mk(\"div\", { class: \"dev-field dev-checkbox\" });\n  const input = document.createElement(\"input\");\n  input.type = \"checkbox\";\n  input.checked = checked;\n  input.addEventListener(\"change\", () => onChange(input.checked));\n  const lbl = mk(\"label\", { text: label });\n  lbl.style.marginBottom = \"0\";\n  wrap.appendChild(input);\n  wrap.appendChild(lbl);\n  return wrap;\n}\n\n// Generic editor for an array of flat-object items (e.g. features, rules)\nfunction listEditor(container, arr, fieldDefs, addTemplate) {\n  clear(container);\n  arr.forEach((item, idx) => {\n    const box = mk(\"div\", { class: \"dev-list-item\" });\n    const remove = mk(\"button\", { class: \"dev-remove\", text: \"×\" });\n    remove.addEventListener(\"click\", () => { arr.splice(idx, 1); render(); buildEditor(); });\n    box.appendChild(remove);\n    fieldDefs.forEach(fd => {\n      box.appendChild(field(fd.label, item[fd.key], (v) => { item[fd.key] = v; }, fd.multiline));\n    });\n    container.appendChild(box);\n  });\n  const addBtn = mk(\"button\", { class: \"dev-add-btn\", text: \"+ Add item\" });\n  addBtn.addEventListener(\"click\", () => { arr.push(JSON.parse(JSON.stringify(addTemplate))); render(); buildEditor(); });\n  container.appendChild(addBtn);\n}\n\nfunction section(title) {\n  const s = mk(\"div\");\n  s.appendChild(mk(\"div\", { class: \"dev-section-title\", text: title }));\n  return s;\n}\n\nfunction buildEditor() {\n  clear(devBody);\n\n  const basics = section(\"Basics\");\n  basics.appendChild(field(\"Server name\", data.serverName, v => data.serverName = v));\n  basics.appendChild(field(\"Server IP\", data.ip, v => data.ip = v));\n  basics.appendChild(field(\"Discord invite URL\", data.discordInvite, v => data.discordInvite = v));\n  basics.appendChild(field(\"Console embed URL (optional)\", data.consoleEmbedUrl || \"\", v => data.consoleEmbedUrl = v || null));\n  basics.appendChild(checkboxField(\"Live status polling enabled\", data.statusEnabled, v => data.statusEnabled = v));\n  devBody.appendChild(basics);\n\n  const about = section(\"About\");\n  about.appendChild(field(\"About text\", data.about, v => data.about = v, true));\n  devBody.appendChild(about);\n\n  const spot = section(\"Coming soon — spotlight card\");\n  spot.appendChild(field(\"Tag\", data.spotlight.tag, v => data.spotlight.tag = v));\n  spot.appendChild(field(\"Title\", data.spotlight.title, v => data.spotlight.title = v));\n  spot.appendChild(field(\"Body\", data.spotlight.body, v => data.spotlight.body = v, true));\n  spot.appendChild(field(\"Perks (one per line)\", data.spotlight.perks.join(\"\\n\"),\n    v => data.spotlight.perks = v.split(\"\\n\").map(s => s.trim()).filter(Boolean), true));\n  devBody.appendChild(spot);\n\n  const soonSec = section(\"Coming soon — queue\");\n  const soonList = mk(\"div\");\n  listEditor(soonList, data.comingSoon, [\n    { key: \"tag\", label: \"Tag\" }, { key: \"title\", label: \"Title\" }, { key: \"body\", label: \"Body\", multiline: true }\n  ], { tag: \"Planned\", title: \"New feature\", body: \"Description here.\" });\n  soonSec.appendChild(soonList);\n  devBody.appendChild(soonSec);\n\n  const featSec = section(\"Features\");\n  const featList = mk(\"div\");\n  listEditor(featList, data.features, [\n    { key: \"icon\", label: \"Icon (emoji)\" }, { key: \"title\", label: \"Title\" }, { key: \"body\", label: \"Body\", multiline: true }\n  ], { icon: \"✨\", title: \"New feature\", body: \"Description here.\" });\n  featSec.appendChild(featList);\n  devBody.appendChild(featSec);\n\n  const specHlSec = section(\"Hardware — headline numbers\");\n  const specHlList = mk(\"div\");\n  listEditor(specHlList, data.specHighlight, [\n    { key: \"value\", label: \"Value\" }, { key: \"label\", label: \"Label\" }\n  ], { value: \"0\", label: \"New stat\" });\n  specHlSec.appendChild(specHlList);\n  devBody.appendChild(specHlSec);\n\n  const specDetSec = section(\"Hardware — details list\");\n  const specDetList = mk(\"div\");\n  listEditor(specDetList, data.specDetails, [\n    { key: \"label\", label: \"Label\" }, { key: \"value\", label: \"Value\" }\n  ], { label: \"New spec\", value: \"—\" });\n  specDetSec.appendChild(specDetList);\n  devBody.appendChild(specDetSec);\n\n  const rulesSec = section(\"Rules\");\n  const rulesListEl = mk(\"div\");\n  listEditor(rulesListEl, data.rules, [\n    { key: \"title\", label: \"Title\" }, { key: \"body\", label: \"Body\", multiline: true }\n  ], { title: \"New rule\", body: \"Description here.\" });\n  rulesSec.appendChild(rulesListEl);\n  devBody.appendChild(rulesSec);\n\n  const contribSec = section(\"Contributors\");\n  const contribList = mk(\"div\");\n  listEditor(contribList, data.contributors, [\n    { key: \"name\", label: \"Name\" }, { key: \"role\", label: \"Role (owner / admin / builder / developer / other)\" }, { key: \"initial\", label: \"Avatar initial\" }\n  ], { name: \"New_Username\", role: \"Builder\", initial: \"N\" });\n  contribSec.appendChild(contribList);\n  devBody.appendChild(contribSec);\n}\n\ndocument.getElementById(\"dev-reset\").addEventListener(\"click\", () => {\n  data = JSON.parse(JSON.stringify(CONFIG));\n  render();\n  buildEditor();\n});\n\ndocument.getElementById(\"dev-download-config\").addEventListener(\"click\", () => {\n  const text = \"const CONFIG = \" + JSON.stringify(data, null, 2) + \";\";\n  const blob = new Blob([text], { type: \"text/javascript\" });\n  const a = document.createElement(\"a\");\n  a.href = URL.createObjectURL(blob);\n  a.download = \"config-snippet.js\";\n  a.click();\n  document.getElementById(\"dev-status-hint\").textContent =\n    \"Downloaded config-snippet.js — paste it over the block between the CONFIG START/END comments in index.html.\";\n});\n\ndocument.getElementById(\"dev-download-full\").addEventListener(\"click\", async () => {\n  const hint = document.getElementById(\"dev-status-hint\");\n  try {\n    const res = await fetch(location.pathname + \"?_=\" + Date.now(), { cache: \"no-store\" });\n    if (!res.ok) throw new Error(\"fetch failed\");\n    let text = await res.text();\n    const startMarker = \"/* === CONFIG START === */\";\n    const endMarker = \"/* === CONFIG END === */\";\n    const startIdx = text.indexOf(startMarker);\n    const endIdx = text.indexOf(endMarker);\n    if (startIdx === -1 || endIdx === -1) throw new Error(\"markers not found\");\n    const before = text.slice(0, startIdx + startMarker.length);\n    const after = text.slice(endIdx);\n    const newBlock = \"\\nconst CONFIG = \" + JSON.stringify(data, null, 2) + \";\\n\";\n    const newText = before + newBlock + after;\n    const blob = new Blob([newText], { type: \"text/html\" });\n    const a = document.createElement(\"a\");\n    a.href = URL.createObjectURL(blob);\n    a.download = \"index.html\";\n    a.click();\n    hint.textContent = \"Downloaded index.html — replace the old file with this one and redeploy.\";\n  } catch (err) {\n    hint.textContent = \"Couldn't fetch this page's own source (this fails when opened as a local file, e.g. via file://). Use \\\"Download config only\\\" instead and paste it in manually.\";\n  }\n});\n\n/* ================================================================\n   How to edit this site\n   1. Quick edits: open this file in any text editor, change values\n      inside the CONFIG object above (between the START/END markers),\n      save, and re-upload/redeploy.\n   2. In-browser editor: once this site is hosted (GitHub Pages, your\n      DDNS host, etc.), visit it with #edit at the end of the URL —\n      e.g. https://yourdomain/#edit — to reveal a pencil button in\n      the corner. Edit fields there, see the preview update live,\n      then click \"Download updated index.html\" and replace the file\n      you deployed with the one you just downloaded.\n   ================================================================ */\n</script>\n</body>\n</html>";
+const ORIGINAL_CONFIG = {
+  "serverName": "Liberty Vanilla",
+  "ip": "play.libertyvanilla.ddns.net",
+  "discordInvite": "https://discord.gg/your-invite",
+  "consoleEmbedUrl": null,
+  "statusEnabled": true,
+  "statusApiBase": "https://api.mcsrvstat.us/3/",
+  "statusPollMs": 10000,
+  "about": "Liberty Vanilla is a carefully curated Minecraft survival server focused on authentic vanilla gameplay, with a competitive but fair economy. No pay-to-win, no double-dipping — just a high-performance world where community, skill, and exploration matter.",
+  "spotlight": {
+    "tag": "Season 3",
+    "title": "Season 3 starting soon",
+    "body": "Season 3 is currently in development — a fresh world, a reworked economy, and a few surprises for launch weekend.",
+    "perks": [
+      "Early access to the new spawn build",
+      "Land claims carry over from Season 2",
+      "First-week double drop rates"
+    ]
+  },
+  "comingSoon": [
+    {
+      "tag": "Planned",
+      "title": "Player-run shops",
+      "body": "A marketplace plot anyone can rent a stall in."
+    },
+    {
+      "tag": "Planned",
+      "title": "Seasonal event arena",
+      "body": "Rotating minigames for the winter break."
+    },
+    {
+      "tag": "Idea",
+      "title": "Companion app",
+      "body": "Check the map and player list from your phone."
+    }
+  ],
+  "features": [
+    {
+      "icon": "🌾",
+      "title": "Vanilla Gameplay",
+      "body": "Stay true to Minecraft with only lightweight vanilla+ additions."
+    },
+    {
+      "icon": "🛡️",
+      "title": "Vetted",
+      "body": "Every player is looked through with our anti-hack layer before they can join."
+    },
+    {
+      "icon": "🤝",
+      "title": "Community Driven",
+      "body": "A welcoming player-based staff and active community."
+    },
+    {
+      "icon": "⚡",
+      "title": "High-Performance",
+      "body": "Powerful hardware backed by the low latency our players expect."
+    },
+    {
+      "icon": "⏱️",
+      "title": "24/7 Uptime",
+      "body": "Always online, so you can jump in whenever you get the itch."
+    },
+    {
+      "icon": "🧩",
+      "title": "Optimized for Smooth Gameplay",
+      "body": "Carefully configured for buttery-smooth survival experiences."
+    }
+  ],
+  "specHighlight": [
+    {
+      "value": "24 GB",
+      "label": "RAM"
+    },
+    {
+      "value": "4",
+      "label": "vCPUs"
+    },
+    {
+      "value": "30",
+      "label": "Players without lag"
+    }
+  ],
+  "specDetails": [
+    {
+      "label": "Storage",
+      "value": "1 TB NVMe SSD"
+    },
+    {
+      "label": "Network",
+      "value": "1 Gbps, unmetered"
+    },
+    {
+      "label": "Region",
+      "value": "US-East"
+    },
+    {
+      "label": "Backups",
+      "value": "Every 6 hours, 14-day retention"
+    }
+  ],
+  "rules": [
+    {
+      "title": "No cheating",
+      "body": "No hacked clients, X-ray, or other unfair advantages."
+    },
+    {
+      "title": "No x-ray",
+      "body": "Resource discovery through vanilla means only."
+    },
+    {
+      "title": "No exploits",
+      "body": "Report bugs and glitches instead of using them."
+    },
+    {
+      "title": "Respect all players",
+      "body": "Harassment, hate speech, and toxicity aren't tolerated."
+    },
+    {
+      "title": "No griefing",
+      "body": "Don't touch builds, chests, or land that isn't yours."
+    },
+    {
+      "title": "No lag machines",
+      "body": "Large farms or redstone builds need staff approval first."
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Your_Username",
+      "role": "Owner",
+      "initial": "Y"
+    },
+    {
+      "name": "CoAdminName",
+      "role": "Admin",
+      "initial": "C"
+    },
+    {
+      "name": "BuilderName",
+      "role": "Builder",
+      "initial": "B"
+    },
+    {
+      "name": "DevContributor",
+      "role": "Developer",
+      "initial": "D"
+    }
+  ]
+};
+let data = structuredClone(ORIGINAL_CONFIG);
+
+const form=document.getElementById("form");
+const status=document.getElementById("status");
+
+function make(tag,attrs={},text=""){
+ const n=document.createElement(tag);
+ for(const [k,v] of Object.entries(attrs)) n.setAttribute(k,v);
+ if(text!==undefined)n.textContent=text;
+ return n;
+}
+function field(label,value,set,multi=false){
+ const w=make("div",{class:"field"}); w.appendChild(make("label",{},label));
+ const i=make(multi?"textarea":"input"); i.value=value??"";
+ i.oninput=()=>{set(i.value);preview()}; w.appendChild(i); return w;
+}
+function arrayEditor(title,arr,defs,template){
+ const card=make("div",{class:"card"}); card.appendChild(make("h2",{},title));
+ const list=make("div");
+ function rebuild(){
+  list.innerHTML="";
+  arr.forEach((item,index)=>{
+   const box=make("div",{class:"array-item"});
+   const rm=make("button",{class:"remove",type:"button"},"×");
+   rm.onclick=()=>{arr.splice(index,1);rebuild();preview()};
+   box.appendChild(rm);
+   defs.forEach(d=>box.appendChild(field(d.label,item[d.key],v=>item[d.key]=v,d.multi)));
+   list.appendChild(box);
+  });
+ }
+ rebuild();
+ const add=make("button",{class:"add",type:"button"},"+ Add item");
+ add.onclick=()=>{arr.push(structuredClone(template));rebuild();preview()};
+ card.appendChild(list);card.appendChild(add);return card;
+}
+function build(){
+ form.innerHTML="";
+ let c=make("div",{class:"card"});c.appendChild(make("h2",{},"Basics"));
+ c.appendChild(field("Server name",data.serverName,v=>data.serverName=v));
+ c.appendChild(field("Server IP",data.ip,v=>data.ip=v));
+ c.appendChild(field("Discord invite URL",data.discordInvite,v=>data.discordInvite=v));
+ c.appendChild(field("Console embed URL (optional)",data.consoleEmbedUrl||"",v=>data.consoleEmbedUrl=v||null));
+ const check=make("div",{class:"field check"}),cb=make("input",{type:"checkbox"});
+ cb.checked=!!data.statusEnabled;cb.onchange=()=>{data.statusEnabled=cb.checked;preview()};
+ check.appendChild(cb);check.appendChild(make("label",{},"Enable live server status"));c.appendChild(check);form.appendChild(c);
+
+ c=make("div",{class:"card"});c.appendChild(make("h2",{},"About"));
+ c.appendChild(field("About text",data.about,v=>data.about=v,true));form.appendChild(c);
+
+ c=make("div",{class:"card"});c.appendChild(make("h2",{},"Coming Soon — Spotlight"));
+ c.appendChild(field("Tag",data.spotlight.tag,v=>data.spotlight.tag=v));
+ c.appendChild(field("Title",data.spotlight.title,v=>data.spotlight.title=v));
+ c.appendChild(field("Body",data.spotlight.body,v=>data.spotlight.body=v,true));
+ c.appendChild(field("Perks — one per line",data.spotlight.perks.join("\n"),v=>data.spotlight.perks=v.split("\n").map(x=>x.trim()).filter(Boolean),true));
+ form.appendChild(c);
+
+ form.appendChild(arrayEditor("Coming Soon — Cards",data.comingSoon,[
+  {key:"tag",label:"Tag"},{key:"title",label:"Title"},{key:"body",label:"Body",multi:true}
+ ],{tag:"Planned",title:"New feature",body:"Description here."}));
+
+ form.appendChild(arrayEditor("Features",data.features,[
+  {key:"icon",label:"Icon / Emoji"},{key:"title",label:"Title"},{key:"body",label:"Body",multi:true}
+ ],{icon:"✨",title:"New feature",body:"Description here."}));
+
+ form.appendChild(arrayEditor("Hardware — Headline Numbers",data.specHighlight,[
+  {key:"value",label:"Value"},{key:"label",label:"Label"}
+ ],{value:"0",label:"New stat"}));
+
+ form.appendChild(arrayEditor("Hardware — Details",data.specDetails,[
+  {key:"label",label:"Label"},{key:"value",label:"Value"}
+ ],{label:"New spec",value:"—"}));
+
+ form.appendChild(arrayEditor("Rules",data.rules,[
+  {key:"title",label:"Title"},{key:"body",label:"Body",multi:true}
+ ],{title:"New rule",body:"Description here."}));
+
+ form.appendChild(arrayEditor("Contributors",data.contributors,[
+  {key:"name",label:"Name"},{key:"role",label:"Role"},{key:"initial",label:"Avatar initial"}
+ ],{name:"New_Username",role:"Builder",initial:"N"}));
+}
+function preview(){
+ document.getElementById("p-name").textContent=data.serverName;
+ document.getElementById("p-ip").textContent=data.ip;
+ document.getElementById("p-about").textContent=data.about;
+ document.getElementById("p-title").textContent=data.spotlight.title;
+ document.getElementById("p-body").textContent=data.spotlight.body;
+}
+function updatedHTML(){
+ const start="/* === CONFIG START === */",end="/* === CONFIG END === */";
+ const a=ORIGINAL_HTML.indexOf(start),b=ORIGINAL_HTML.indexOf(end);
+ if(a<0||b<0)throw new Error("CONFIG markers not found.");
+ return ORIGINAL_HTML.slice(0,a+start.length)+"\nconst CONFIG = "+JSON.stringify(data,null,2)+";\n"+ORIGINAL_HTML.slice(b);
+}
+document.getElementById("download").onclick=()=>{
+ try{
+  const blob=new Blob([updatedHTML()],{type:"text/html"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="index.html";a.click();
+  status.textContent="✅ Downloaded index.html — replace the old one in GitHub.";
+ }catch(e){status.textContent="❌ "+e.message}
+};
+document.getElementById("reset").onclick=()=>{data=structuredClone(ORIGINAL_CONFIG);build();preview();status.textContent="Reset."};
+document.getElementById("copy").onclick=async()=>{
+ await navigator.clipboard.writeText("const CONFIG = "+JSON.stringify(data,null,2)+";");
+ status.textContent="✅ CONFIG copied.";
+};
+build();preview();
+</script>
+</body>
+</html>
